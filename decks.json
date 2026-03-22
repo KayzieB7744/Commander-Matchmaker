@@ -528,58 +528,24 @@
     "archetype": "ramp"
   },
   {
-    "release": "2026",
-    "code": "SCD",
-    "setName": "Lorwyn",
-    "preconName": "Elves",
-    "power": 7,
-    "bracket": 4,
-    "tags": "tribal",
-    "speed": "fast",
-    "archetype": "aggro"
-  },
-  {
-    "release": "2026",
-    "code": "SCD",
-    "setName": "Lorwyn",
-    "preconName": "Faeries",
-    "power": 7,
-    "bracket": 4,
-    "tags": "tempo",
-    "speed": "fast",
-    "archetype": "tempo"
-  },
-  {
-    "release": "2026",
-    "code": "SCD",
-    "setName": "Lorwyn",
-    "preconName": "Goblins",
-    "power": 7,
-    "bracket": 4,
-    "tags": "aggro",
-    "speed": "fast",
-    "archetype": "aggro"
-  },
-  {
-    "release": "2026",
-    "code": "SCD",
-    "setName": "Lorwyn",
-    "preconName": "Kithkin",
-    "power": 6.5,
-    "bracket": 3,
-    "tags": "go-wide",
-    "speed": "mid",
-    "archetype": "aggro"
-  },
-  {
-    "release": "2026",
-    "code": "SCD",
-    "setName": "Lorwyn",
-    "preconName": "Elementals",
-    "power": 7,
-    "bracket": 4,
-    "tags": "value",
-    "speed": "mid",
-    "archetype": "value"
-  }
-]
+  "release": "2026",
+  "code": "SCD",
+  "setName": "Lorwyn Eclipsed",
+  "preconName": "Blight Curse",
+  "power": 6.5,
+  "bracket": 3,
+  "tags": "-1/-1 counters",
+  "speed": "mid",
+  "archetype": "attrition / counters"
+},
+{
+  "release": "2026",
+  "code": "SCD",
+  "setName": "Lorwyn Eclipsed",
+  "preconName": "Dance of the Elements",
+  "power": 7,
+  "bracket": 3,
+  "tags": "elementals tokens evoke",
+  "speed": "mid",
+  "archetype": "synergy / value"
+}
