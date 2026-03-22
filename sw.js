@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'commander-matchmaker-v1';
+const CACHE_NAME = 'commander-matchmaker-v2';
 const ASSETS = [
   './',
   './index.html',
