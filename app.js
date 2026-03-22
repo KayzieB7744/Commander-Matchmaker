@@ -1,0 +1,168 @@
+
+let DECKS = [];
+let podSeed = 0;
+let duelSeed = 0;
+
+function $(id){ return document.getElementById(id); }
+
+function mulberry32(a) {
+  return function() {
+    let t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+}
+
+function seededShuffle(arr, seed){
+  const rng = mulberry32(seed || 1);
+  const copy = [...arr];
+  for(let i = copy.length - 1; i > 0; i--){
+    const j = Math.floor(rng() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function deckCard(deck){
+  return `
+    <article class="deck-card">
+      <div class="deck-title">${deck.preconName}</div>
+      <div class="deck-sub">${deck.setName} • ${deck.code} • ${deck.release}</div>
+      <div class="meta">
+        <span class="pill">Power ${deck.power}</span>
+        <span class="pill">Bracket ${deck.bracket}</span>
+        <span class="pill">${deck.speed}</span>
+        <span class="pill">${deck.archetype}</span>
+        <span class="pill">${deck.tags}</span>
+      </div>
+    </article>
+  `;
+}
+
+function renderEmpty(el, text){
+  el.innerHTML = `<div class="empty">${text}</div>`;
+}
+
+function uniqueValues(key){
+  return [...new Set(DECKS.map(d => d[key]).filter(Boolean))].sort();
+}
+
+function populateArchetypes(){
+  const sel = $('deckArchetype');
+  uniqueValues('archetype').forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v;
+    sel.appendChild(opt);
+  });
+}
+
+function filterDecks(filters){
+  return DECKS.filter(deck => {
+    const bracketOk = filters.bracket ? Number(deck.bracket) === Number(filters.bracket) : true;
+    const powerOk = deck.power >= filters.minPower && deck.power <= filters.maxPower;
+    const speedOk = filters.avoidFast ? deck.speed !== 'fast' : true;
+    return bracketOk && powerOk && speedOk;
+  });
+}
+
+function renderDeckList(){
+  const q = $('searchInput').value.trim().toLowerCase();
+  const bracket = $('deckBracket').value;
+  const speed = $('deckSpeed').value;
+  const archetype = $('deckArchetype').value;
+
+  const list = DECKS.filter(deck => {
+    const text = `${deck.preconName} ${deck.setName} ${deck.code} ${deck.tags} ${deck.archetype}`.toLowerCase();
+    const qOk = !q || text.includes(q);
+    const bOk = !bracket || Number(deck.bracket) === Number(bracket);
+    const sOk = !speed || deck.speed === speed;
+    const aOk = !archetype || deck.archetype === archetype;
+    return qOk && bOk && sOk && aOk;
+  });
+
+  $('deckCount').textContent = `${list.length} deck${list.length === 1 ? '' : 's'} shown`;
+  $('deckList').innerHTML = list.map(deckCard).join('');
+  if(!list.length) renderEmpty($('deckList'), 'No decks match those filters.');
+}
+
+function buildPod(){
+  const filters = {
+    bracket: $('podBracket').value,
+    minPower: Number($('podMinPower').value),
+    maxPower: Number($('podMaxPower').value),
+    avoidFast: $('podAvoidFast').value === 'yes'
+  };
+  const size = Number($('podSize').value);
+  const pool = filterDecks(filters);
+  $('podStatus').textContent = `${pool.length} eligible deck${pool.length === 1 ? '' : 's'}`;
+  if(pool.length < size){
+    renderEmpty($('podResults'), `Only ${pool.length} eligible deck${pool.length === 1 ? '' : 's'} found. Widen the filters or reduce pod size.`);
+    return;
+  }
+  const pod = seededShuffle(pool, podSeed).slice(0, size);
+  $('podResults').innerHTML = pod.map(deckCard).join('');
+}
+
+function buildDuel(){
+  const filters = {
+    bracket: $('duelBracket').value,
+    minPower: Number($('duelMinPower').value),
+    maxPower: Number($('duelMaxPower').value),
+    avoidFast: $('duelAvoidFast').value === 'yes'
+  };
+  const pool = filterDecks(filters);
+  $('duelStatus').textContent = `${pool.length} eligible deck${pool.length === 1 ? '' : 's'}`;
+  if(pool.length < 2){
+    renderEmpty($('duelResults'), 'Need at least 2 eligible decks.');
+    return;
+  }
+  const duel = seededShuffle(pool, duelSeed).slice(0, 2);
+  $('duelResults').innerHTML = duel.map(deckCard).join('');
+}
+
+function wireTabs(){
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      $(btn.dataset.tab).classList.add('active');
+    });
+  });
+}
+
+function wireEvents(){
+  ['searchInput','deckBracket','deckSpeed','deckArchetype'].forEach(id => $(id).addEventListener('input', renderDeckList));
+  ['podBracket','podMinPower','podMaxPower','podAvoidFast','podSize'].forEach(id => $(id).addEventListener('input', buildPod));
+  ['duelBracket','duelMinPower','duelMaxPower','duelAvoidFast'].forEach(id => $(id).addEventListener('input', buildDuel));
+
+  $('rerollPodBtn').addEventListener('click', () => {
+    podSeed = Math.floor(Math.random() * 1_000_000_000);
+    buildPod();
+  });
+  $('rerollDuelBtn').addEventListener('click', () => {
+    duelSeed = Math.floor(Math.random() * 1_000_000_000);
+    buildDuel();
+  });
+}
+
+async function init(){
+  const res = await fetch('decks.json');
+  DECKS = await res.json();
+  populateArchetypes();
+  wireTabs();
+  wireEvents();
+  podSeed = Math.floor(Math.random() * 1_000_000_000);
+  duelSeed = Math.floor(Math.random() * 1_000_000_000);
+  renderDeckList();
+  buildPod();
+  buildDuel();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+}
+
+init();
