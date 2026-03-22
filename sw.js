@@ -1,5 +1,6 @@
 
-const CACHE_NAME = 'commander-matchmaker-v2';
+const CACHE_NAME = 'commander-matchmaker-v3';
+
 const ASSETS = [
   './',
   './index.html',
@@ -11,10 +12,29 @@ const ASSETS = [
   './icon-512.png'
 ];
 
+// Install new cache
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+  );
 });
 
+// Delete old caches (THIS IS THE MISSING PIECE)
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      )
+    )
+  );
+});
+
+// Serve cached files
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request).then(resp => resp || fetch(event.request))
